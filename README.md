@@ -61,6 +61,13 @@ export RABBITMQ_HOST=localhost
 mvn spring-boot:run
 ```
 
+## Observabilidad (Nivel 2, Fase 11)
+
+Igual que los demás microservicios backend: agente Java de OpenTelemetry hacia
+Jaeger (vía `otel-collector`), y métricas Micrometer/Prometheus en
+`/actuator/prometheus`. La traza de un mensaje consumido desde RabbitMQ también
+queda instrumentada automáticamente por el agente (soporta Spring AMQP).
+
 ## Endpoints
 
 | Metodo | Ruta | Descripcion |
@@ -69,4 +76,3 @@ mvn spring-boot:run
 | GET | `/api/notifications/itinerary/{itineraryId}` | Historial de un itinerario especifico |
 
 No hay endpoints de escritura: la unica entrada real es el evento de RabbitMQ.
-# itinerarios-notification
