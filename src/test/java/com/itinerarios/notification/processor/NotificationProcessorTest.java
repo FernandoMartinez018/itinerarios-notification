@@ -4,6 +4,7 @@ import com.itinerarios.notification.entity.NotificationHistory;
 import com.itinerarios.notification.event.ItineraryCreatedEvent;
 import com.itinerarios.notification.repository.NotificationHistoryRepository;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -74,5 +75,26 @@ class NotificationProcessorTest {
         NotificationHistory failedRecord = captor.getAllValues().get(1);
         assertThat(failedRecord.getStatus()).isEqualTo(NotificationHistory.Status.FAILED);
         assertThat(failedRecord.getErrorMessage()).contains("DB caída");
+    }
+
+    @Test
+    void process_ignoraEventoYaNotificado() {
+        ItineraryCreatedEvent event = sampleEvent();
+        when(repository.existsByEventIdAndStatus(event.eventId(), NotificationHistory.Status.SENT)).thenReturn(true);
+
+        processor.process(event);
+
+        verify(repository, never()).save(any(NotificationHistory.class));
+    }
+
+    @Test
+    void process_noRegistraFailedSiElIndiceUnicoDetectaDuplicadoConcurrente() {
+        ItineraryCreatedEvent event = sampleEvent();
+        when(repository.save(any(NotificationHistory.class)))
+                .thenThrow(new DataIntegrityViolationException("ux_notification_history_event_id_sent"));
+
+        processor.process(event);
+
+        verify(repository, times(1)).save(any(NotificationHistory.class));
     }
 }

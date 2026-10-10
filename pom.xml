@@ -20,7 +20,7 @@
 
     <properties>
         <java.version>21</java.version>
-        <springdoc.version>2.8.5</springdoc.version>
+        <springdoc.version>3.0.0</springdoc.version>
     </properties>
 
     <!--
@@ -33,10 +33,22 @@
         normal. El empaquetado como Lambda (imagen de contenedor, sección 58-59) se
         evalúa en Nivel 3, cuando corresponda el despliegue real en AWS.
     -->
+
+    <!--
+        Ajustes Spring Boot 4 (ADR-015, auditoría 2026-10-09):
+        - spring-boot-starter-web -> spring-boot-starter-webmvc (nombre modular de Boot 4).
+        - flyway-core -> spring-boot-starter-flyway: en Boot 4 la autoconfiguración de
+          Flyway vive en su propio módulo; sin el starter las migraciones NO se ejecutan
+          y ddl-auto=validate falla al arrancar.
+        - spring-boot-starter-aop -> spring-boot-starter-aspectj (renombrado en Boot 4).
+        - springdoc 2.8.x (Boot 3) -> 3.0.x (Boot 4 / Spring Framework 7).
+        - spring-boot-starter-webmvc-test: MockMvc/@WebMvcTest quedaron en módulo propio.
+        Verificar con `mvn -B clean verify` (Maven Central no estaba accesible al editar).
+    -->
     <dependencies>
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -62,8 +74,8 @@
         </dependency>
 
         <dependency>
-            <groupId>org.flywaydb</groupId>
-            <artifactId>flyway-core</artifactId>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-flyway</artifactId>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
@@ -76,9 +88,21 @@
             <version>${springdoc.version}</version>
         </dependency>
 
+        <!-- Handler AWS Lambda (seccion 31): misma logica que el consumer RabbitMQ. -->
+        <dependency>
+            <groupId>com.amazonaws</groupId>
+            <artifactId>aws-lambda-java-core</artifactId>
+            <version>1.4.0</version>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

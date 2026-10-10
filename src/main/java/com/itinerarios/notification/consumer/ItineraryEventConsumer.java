@@ -4,6 +4,7 @@ import com.itinerarios.notification.config.RabbitMQConfig;
 import com.itinerarios.notification.event.ItineraryCreatedEvent;
 import com.itinerarios.notification.processor.NotificationProcessor;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 /**
@@ -13,6 +14,8 @@ import org.springframework.stereotype.Component;
  * (mismo principio de separacion que Controller -> Service en los demas
  * microservicios, seccion 20).
  */
+// En Lambda el evento llega por invocacion, no por la cola: no se registra el listener.
+@Profile("!lambda")
 @Component
 public class ItineraryEventConsumer {
 

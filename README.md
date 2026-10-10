@@ -48,6 +48,12 @@ reintenta una vez mas; si vuelve a fallar, se descarta en vez de reencolarse
 indefinidamente (seccion 28: "no aplicar Retry indiscriminadamente"). No hay
 dead-letter queue configurada todavia - se agrega en Nivel 3 si se prioriza.
 
+## Idempotencia
+
+`V2__unique_sent_event_id.sql` impide dos notificaciones `SENT` para el mismo
+`eventId` (el Outbox entrega al menos una vez). Pendiente: que `NotificationProcessor`
+verifique el duplicado antes de guardar (ADR-015).
+
 ## Ejecutar localmente
 
 ```bash
