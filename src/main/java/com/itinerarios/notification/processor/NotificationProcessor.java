@@ -5,6 +5,7 @@ import com.itinerarios.notification.event.ItineraryCreatedEvent;
 import com.itinerarios.notification.repository.NotificationHistoryRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 /**
@@ -28,6 +29,11 @@ public class NotificationProcessor {
     }
 
     public void process(ItineraryCreatedEvent event) {
+        // El Outbox entrega "al menos una vez" (ADR-008): un evento ya notificado se ignora.
+        if (repository.existsByEventIdAndStatus(event.eventId(), NotificationHistory.Status.SENT)) {
+            log.info("Evento {} ya notificado; duplicado ignorado", event.eventId());
+            return;
+        }
         try {
             String message = buildMessage(event);
             simulateNotificationDelivery(event, message);
@@ -35,6 +41,9 @@ public class NotificationProcessor {
             NotificationHistory history = NotificationHistory.sent(
                     event.eventId(), event.itineraryId(), event.userName(), message);
             repository.save(history);
+        } catch (DataIntegrityViolationException ex) {
+            // Carrera entre dos entregas del mismo evento: el indice unico (V2) ya la resolvio.
+            log.info("Evento {} ya notificado por otra entrega concurrente; duplicado ignorado", event.eventId());
         } catch (Exception ex) {
             log.error("Failed to process ItineraryCreatedEvent for itinerary {}", event.itineraryId(), ex);
             NotificationHistory history = NotificationHistory.failed(

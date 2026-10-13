@@ -48,6 +48,12 @@ reintenta una vez mas; si vuelve a fallar, se descarta en vez de reencolarse
 indefinidamente (seccion 28: "no aplicar Retry indiscriminadamente"). No hay
 dead-letter queue configurada todavia - se agrega en Nivel 3 si se prioriza.
 
+## Idempotencia
+
+`V2__unique_sent_event_id.sql` impide dos notificaciones `SENT` para el mismo
+`eventId` (el Outbox entrega al menos una vez). Pendiente: que `NotificationProcessor`
+verifique el duplicado antes de guardar (ADR-015).
+
 ## Ejecutar localmente
 
 ```bash
@@ -61,6 +67,13 @@ export RABBITMQ_HOST=localhost
 mvn spring-boot:run
 ```
 
+## Observabilidad (Nivel 2, Fase 11)
+
+Igual que los demás microservicios backend: agente Java de OpenTelemetry hacia
+Jaeger (vía `otel-collector`), y métricas Micrometer/Prometheus en
+`/actuator/prometheus`. La traza de un mensaje consumido desde RabbitMQ también
+queda instrumentada automáticamente por el agente (soporta Spring AMQP).
+
 ## Endpoints
 
 | Metodo | Ruta | Descripcion |
@@ -69,4 +82,3 @@ mvn spring-boot:run
 | GET | `/api/notifications/itinerary/{itineraryId}` | Historial de un itinerario especifico |
 
 No hay endpoints de escritura: la unica entrada real es el evento de RabbitMQ.
-# itinerarios-notification
