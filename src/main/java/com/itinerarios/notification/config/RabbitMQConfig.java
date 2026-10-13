@@ -6,7 +6,8 @@ import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
+import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
+import org.springframework.boot.amqp.autoconfigure.SimpleRabbitListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -44,15 +45,18 @@ public class RabbitMQConfig {
     public static final String LISTENER_CONTAINER_FACTORY = "notificationListenerContainerFactory";
 
     @Bean
-    public Jackson2JsonMessageConverter jsonMessageConverter() {
-        return new Jackson2JsonMessageConverter();
+    public JacksonJsonMessageConverter jsonMessageConverter() {
+        return new JacksonJsonMessageConverter();
     }
 
     @Bean(LISTENER_CONTAINER_FACTORY)
     public SimpleRabbitListenerContainerFactory notificationListenerContainerFactory(
-            ConnectionFactory connectionFactory, Jackson2JsonMessageConverter converter) {
+            SimpleRabbitListenerContainerFactoryConfigurer configurer,
+            ConnectionFactory connectionFactory, JacksonJsonMessageConverter converter) {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
-        factory.setConnectionFactory(connectionFactory);
+        // El configurer aplica spring.rabbitmq.listener.simple.* (retry, default-requeue-rejected);
+        // sin el, un mensaje no deserializable se reencolaba en bucle infinito.
+        configurer.configure(factory, connectionFactory);
         factory.setMessageConverter(converter);
         return factory;
     }
