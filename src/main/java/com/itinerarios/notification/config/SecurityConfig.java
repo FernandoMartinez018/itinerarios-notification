@@ -2,6 +2,7 @@ package com.itinerarios.notification.config;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnWebApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -21,9 +22,11 @@ import java.util.Map;
 /**
  * Seguridad servicio-a-servicio (paso 31, seccion 108): el historial de notificaciones solo se
  * consulta con un JWT de Keycloak con scope notification.read (hoy, el Gateway). El consumo de
- * RabbitMQ y el handler Lambda no pasan por HTTP, asi que no se ven afectados.
+ * RabbitMQ y el handler Lambda no pasan por HTTP, asi que no se ven afectados. La Lambda arranca
+ * Spring sin servidor web (no hay HttpSecurity): por eso esta config solo aplica en contexto web.
  */
 @Configuration
+@ConditionalOnWebApplication(type = ConditionalOnWebApplication.Type.SERVLET)
 public class SecurityConfig {
 
     @Bean
